@@ -167,25 +167,31 @@ class RemoteAuth extends BaseAuthStrategy {
 
     async deleteMetadata() {
         const sessionDirs = [this.tempDir, path.join(this.tempDir, 'Default')];
+        
         for (const dir of sessionDirs) {
-            const sessionFiles = await fs.promises.readdir(dir);
-            for (const element of sessionFiles) {
-                if (!this.requiredDirs.includes(element)) {
-                    const dirElement = path.join(dir, element);
-                    const stats = await fs.promises.lstat(dirElement);
-    
-                    if (stats.isDirectory()) {
-                        await fs.promises.rm(dirElement, {
-                            recursive: true,
-                            force: true
-                        }).catch(() => {});
-                    } else {
-                        await fs.promises.unlink(dirElement).catch(() => {});
+            try {
+                const sessionFiles = await fs.promises.readdir(dir);
+                
+                for (const element of sessionFiles) {
+                    if (!this.requiredDirs.includes(element)) {
+                        const dirElement = path.join(dir, element);
+                        const stats = await fs.promises.lstat(dirElement);
+                        
+                        if (stats.isDirectory()) {
+                            await fs.promises.rm(dirElement, {
+                                recursive: true,
+                                force: true
+                            }).catch(() => {});
+                        } else {
+                            await fs.promises.unlink(dirElement).catch(() => {});
+                        }
                     }
                 }
+            } catch (error) {
+                console.error(`Error processing directory ${dir}:`, error);
             }
         }
-    }
+    }    
 
     async isValidPath(path) {
         try {
